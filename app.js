@@ -9,9 +9,20 @@ function normalize(value) {
     .replace(/\s+/g, ' ').trim();
 }
 function matches(record, query, department = '', section = '') {
+  const parts = normalize(query).split(' ').filter(Boolean);
+  const matchesName = name => {
+    const normalized = normalize(name);
+    let cursor = 0;
+    return parts.every(part => {
+      const position = normalized.indexOf(part, cursor);
+      if (position === -1) return false;
+      cursor = position + part.length;
+      return true;
+    });
+  };
   return (!department || record.department === department) &&
     (!section || record.student_section === section) &&
-    normalize(`${record.name} ${record.english_name || ''}`).includes(normalize(query));
+    [record.name, record.english_name].filter(Boolean).some(matchesName);
 }
 let faculty = [], selected = '', selectedSection = '', toastTimer;
 const search = document.querySelector('#search');

@@ -26,6 +26,26 @@ const fs = require('node:fs');
  await page.screenshot({path:'preview-initial.png'});
  const records=JSON.parse(fs.readFileSync('faculty.json','utf8'));
  const search=page.locator('#search');
+ assert.equal(await page.locator('.search-box kbd,#section-label').count(),0);
+ assert.equal(await page.locator('.section-filter [role="group"]').getAttribute('aria-label'),'القسم الدراسي');
+ await page.locator('h1').click(); await page.keyboard.press('/');
+ assert.equal(await search.evaluate(el=>el===document.activeElement),true);
+ assert.equal(await search.inputValue(),'');
+ for(const query of ['منى','منى غطيش','منى الخزاعي','منى غطيش الخزاعي','مُنَى   الْخُزَاعِي','منى غطي الخز']){
+  await search.fill(query);
+  assert.ok((await page.locator('.card h3').allTextContents()).includes('منى غطيش الخزاعي'),query);
+ }
+ await search.fill('الخزاعي منى');
+ assert.equal(await page.locator('.card').count(),0,'name parts must retain typed order');
+ await search.fill('منى الخزاعي');
+ await page.locator('[data-department="IT"]').click();
+ await page.locator('[data-section="female"]').click();
+ assert.equal(await page.locator('.card h3').textContent(),'منى غطيش الخزاعي');
+ await page.locator('[data-section="male"]').click(); assert.equal(await page.locator('.card').count(),0);
+ await page.locator('[data-section="male"]').click();
+ await page.locator('[data-department="CS"]').click(); assert.equal(await page.locator('.card').count(),0);
+ await page.locator('[data-department="CS"]').click();
+ await search.fill('');
  for(const dept of ['CS','IT','IS']){
   await page.locator(`[data-department="${dept}"]`).click();
   assert.equal(await page.locator('.card').count(),records.filter(r=>r.department===dept).length);
@@ -65,10 +85,21 @@ const fs = require('node:fs');
  await search.fill('نور عمر باجنيد'); assert.equal(await page.locator('.missing').textContent(),'البريد الجامعي غير متاح في المصدر');
  // Synthetic record tests English behavior without adding invented people to the dataset.
  assert.equal(await page.evaluate(()=>matches({name:'اسم',english_name:'Alice Smith',department:'CS'},'DR. aLiCe','CS')),true);
+ assert.equal(await page.evaluate(()=>matches({name:'اسم',english_name:'Alice Jane Smith',department:'CS'},'aLiCe smi','CS')),true);
+ assert.equal(await page.evaluate(()=>matches({name:'اسم',english_name:'Alice Jane Smith',department:'CS'},'Smith Alice','CS')),false);
  for(const width of [1440,768,390,320]){
   await page.setViewportSize({width,height:900}); await search.fill('احمد');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`overflow ${width}`);
   assert.equal(await page.locator('html').getAttribute('dir'),'rtl');
+  const layout=await page.evaluate(()=>{
+   const group=document.querySelector('.section-filter .filters').getBoundingClientRect();
+   const departments=document.querySelector('.filter-panel>.filters').getBoundingClientRect();
+   const box=document.querySelector('.search-box').getBoundingClientRect();
+   const icon=document.querySelector('.search-box svg').getBoundingClientRect();
+   const input=document.querySelector('#search').getBoundingClientRect();
+   return {centered:Math.abs((group.left+group.right)/2-(departments.left+departments.right)/2)<2,below:group.top>=departments.bottom,iconRight:icon.left>=input.right,inputFills:input.left-box.left<22};
+  });
+  assert.ok(Object.values(layout).every(Boolean),JSON.stringify({width,...layout}));
   const positions=await page.evaluate(()=>[...document.querySelectorAll('[data-department],.badge')].map(el=>{const ar=el.querySelector('span').getBoundingClientRect();const code=el.querySelector('b').getBoundingClientRect();return code.right<=ar.left}));
   assert.ok(positions.every(Boolean),`department code on visual left ${width}`);
   assert.equal(await page.locator('.email-row a').first().getAttribute('dir'),'ltr');
