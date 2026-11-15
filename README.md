@@ -1,31 +1,56 @@
 # FCIT Faculty Mail Finder
 
-Static Arabic faculty email directory. No build step, backend, or API key is required.
+دليل للبحث عن البريد الجامعي لأعضاء هيئة التدريس في كلية الحاسبات وتقنية المعلومات بجامعة الملك عبدالعزيز.
+
+I built this site to make it easier for FCIT students at King Abdulaziz
+University to find their instructors’ university emails.
+
+## Features
+
+- Search by full or partial Arabic name.
+- Filter by Computer Science (CS), Information Technology (IT), or Information Systems (IS).
+- Filter by student section (`طلاب` or `طالبات`). Department and section filters can be combined with each other and with name search.
+
+Built with HTML, CSS, and JavaScript. Search and filtering run in the browser using `faculty.json`. The site requires no build step, backend, or API key.
 
 ## Run locally
+
+From the project folder, start a local server:
 
 ```powershell
 python -m http.server 8000
 ```
 
-Open http://localhost:8000. Serve over HTTP; opening index.html as a file prevents JSON loading in most browsers. For GitHub Pages, select **Deploy from a branch → main → / (root)** in **Settings → Pages**. The runtime files are index.html, style.css, app.js, faculty.json, and favicon.svg. They use relative paths for repository URLs. Search and filtering run locally. The optional Google font has system font fallbacks.
+Open [http://localhost:8000](http://localhost:8000). The local server lets the browser load `faculty.json` over HTTP.
 
-## Data provenance
+## Data sources (Where the emails came from)
 
-| Department | Archive snapshot | Faculty records |
-| --- | --- | --- |
-| CS | 2025-06-18 | 96 |
-| IT | 2024-06-06 | 103 |
-| IS | 2022-11-14 | 117 |
+I collected the listings from archived KAU pages for [Computer Science][cs],
+[Information Technology][it], and [Information Systems][is]. Some emails
+may have changed since those pages were archived.
 
-Total: 316 faculty records. All three archives were accessed successfully. Original downloaded HTML is preserved locally in `cs-source.html`, `it-source.html`, and `is-source.html` and excluded from Git because those pages also contain unrelated contact details. `python fetch_sources.py` downloads the raw archived HTML; `python extract_faculty.py` regenerates faculty.json using Python's standard library. Run `python verify_data.py` to verify the public dataset against those saved sources.
+[cs]: https://web.archive.org/web/20250618055258/https://fcitweb.kau.edu.sa/fcitwebsite/facultycsar-new.php
+[it]: https://web.archive.org/web/20240606124554/https://fcitweb.kau.edu.sa/fcitwebsite/facultyitar-new.php
+[is]: https://web.archive.org/web/20221114154659/https://fcitweb.kau.edu.sa/fcitwebsite/facultyisar-new.php
 
-Each record includes `student_section` (`male` or `female`), derived from the source card's enclosing tab: `tab1` = شطر الطلاب; `tab2` = شطر الطالبات. This describes the faculty listing's student section, not an inference about the faculty member's gender. CS: 42 male-section / 54 female-section; IT: 53 / 50; IS: 66 / 51. The initial view has no active criteria and hides results. Department and student-section filters toggle independently and combine with the name search using AND. Clearing all criteria hides results again.
+Names and email addresses are extracted from the same faculty card. The `student_section` field reflects the section where the card appears in the archive (`tab1` for `طلاب`, `tab2` for `طالبات`).
 
-Each name and address is taken from the same faculty card, never joined by position across separate lists. This verifies the association published by the archive; it does not verify current employment or mailbox deliverability. Only syntactically valid @kau.edu.sa addresses are accepted. Snapshot dates describe the requested archived pages, not a current verification date.
+Only addresses with valid syntax and the `@kau.edu.sa` domain are included. Two faculty records have `email: null` because their source cards contain a malformed or non-university address. These cards display **البريد الجامعي غير متاح في المصدر**. An explicit test entry in the IS archive is excluded from the totals.
 
-Two records have `email: null`: IT's نور عمر باجنيد has a malformed address in the source; IS's عبير عبدالله البلوي lists a non-university address. Neither address is published or guessed. Both display `البريد الجامعي غير متاح في المصدر`. IS also contains an explicit test account, excluded from faculty counts. No English faculty names appear in the retained cards; `english_name` is optional and supported by the search and display when available. Arabic names are preserved as published.
+Arabic names are preserved as published. The site supports an optional `english_name` field, which is empty in the current dataset. The snapshot dates indicate when the source pages were archived. Current faculty appointments and mailbox deliverability are unverified.
+
+### Regenerate the dataset
+
+The archived HTML is stored locally as `cs-source.html`, `it-source.html`, and `is-source.html`. Run `fetch_sources.py` if you need to download the archived pages again, then regenerate `faculty.json`:
+
+```powershell
+python extract_faculty.py
+```
+
+The extraction script uses Python’s standard library.
 
 ## Validation
 
-`node --check app.js` checks syntax. For browser tests, install Playwright locally with `npm install --no-save --package-lock=false playwright` and `npx playwright install chromium`, then run `node test-site.cjs` with the server active. Optional environment variables: `SITE_URL` (including the trailing slash) for a repository subpath, `CHROME_PATH` for an existing Chrome executable, and `PLAYWRIGHT_MODULE` for an existing Playwright module. The tests check search, filters, clipboard, favicon loading, relative asset paths and responsive overflow at 1440, 768, 390 and 320 pixels. English matching uses a synthetic test record only, never a fabricated faculty entry. Screenshots and browser output are excluded from Git.
+Check JavaScript syntax with `node --check app.js`. With the local server running, use `node test-site.cjs` to run the browser tests. The script requires Playwright and Chrome, and its local paths may need updating on another machine.
+
+The tests cover browser interactions and horizontal overflow at viewport widths of 1440, 768, 390, and 320 px. English name matching is tested with a synthetic record that stays outside the published dataset.
