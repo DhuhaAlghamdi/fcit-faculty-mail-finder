@@ -1,0 +1,31 @@
+# Credentials and machine-local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+.aws/
+.codex/
+.agents/
+.local-tools/
+.venv/
+venv/
+node_modules/
+__pycache__/
+*.py[cod]
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
+
+# Downloaded archives can contain unrelated footer/contact data.
+*-source.html
+
+# Local browser output and review tooling
+preview-*.png
+test-results/
+playwright-report/
+.local-review/
