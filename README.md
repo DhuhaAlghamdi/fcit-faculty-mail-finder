@@ -15,7 +15,7 @@ Built with HTML, CSS, and JavaScript. Search and filtering run in the browser us
 
 ## Visitor counter and Netlify setup
 
-The small **عدد الزائرين** box appears below the filters and above the results. Opening the page sends one POST to `/.netlify/functions/visitor-count`, independently of directory loading. Search, filters and email copying never call it. A random UUID in `sessionStorage` identifies the tab's browsing session; reloads and retries reuse it. Closing that session and opening a fresh session creates a new ID. Browser session restoration can retain the original ID. When storage or the endpoint fails, the box stays hidden.
+The small, muted **عدد الزائرين** text appears at the bottom-left below the results, in normal page flow. On short pages it sits near the bottom of the viewport. Opening the page sends one POST to `/.netlify/functions/visitor-count`, independently of directory loading. Search, filters and email copying never call it. A random UUID in `sessionStorage` identifies the tab's browsing session; reloads and retries reuse it. Closing that session and opening a fresh session creates a new ID. Browser session restoration can retain the original ID. When storage or the endpoint fails, the counter stays hidden.
 
 Before deploying to the existing Netlify project:
 

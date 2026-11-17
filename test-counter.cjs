@@ -81,15 +81,33 @@ const {chromium} = require('playwright');
     await page.locator('#search').fill('محمد');
     assert.equal(calls, before, 'interactions never call counter');
     assert.equal(await total(), 141);
-    for (const width of [390, 320]) {
+    for (const width of [1440, 390, 320]) {
       await page.setViewportSize({width, height: 844});
+      await page.locator('#search').fill('');
+      if (await page.locator('[data-department="CS"]').getAttribute('aria-pressed') === 'true') {
+        await page.locator('[data-department="CS"]').click();
+      }
+      await page.evaluate(() => scrollTo(0, 0));
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       assert.equal(await page.evaluate(() => {
         const box = document.querySelector('#visitor-counter').getBoundingClientRect();
-        return box.top >= document.querySelector('.filter-panel').getBoundingClientRect().bottom &&
-          box.bottom <= document.querySelector('.directory').getBoundingClientRect().top &&
-          box.left >= 0 && box.right <= innerWidth;
-      }), true, `counter placement at ${width}px`);
+        const main = document.querySelector('main').getBoundingClientRect();
+        const style = getComputedStyle(document.querySelector('#visitor-counter'));
+        return Math.abs(box.left - main.left) < 1 && box.left >= 20 && box.right <= innerWidth - 20 &&
+          Math.abs(innerHeight - box.bottom - 24) < 2 && style.position === 'static' &&
+          style.backgroundColor === 'rgba(0, 0, 0, 0)' && style.borderTopWidth === '0px' && style.padding === '0px';
+      }), true, `bottom-left empty layout at ${width}px`);
+      await page.screenshot({path: `preview-counter-empty-${width}.png`});
+      await page.locator('[data-department="CS"]').click();
+      assert.equal(await page.evaluate(() => {
+        const box = document.querySelector('#visitor-counter').getBoundingClientRect();
+        const directory = document.querySelector('.directory').getBoundingClientRect();
+        return box.top >= directory.bottom + 31 &&
+          Math.abs(box.left - document.querySelector('main').getBoundingClientRect().left) < 1 &&
+          document.documentElement.scrollWidth <= innerWidth;
+      }), true, `counter follows results at ${width}px`);
+      await page.locator('#visitor-counter').scrollIntoViewIfNeeded();
+      await page.screenshot({path: `preview-counter-results-${width}.png`});
     }
     await page.screenshot({path: 'preview-counter-320.png', fullPage: true});
     const fresh = await browser.newContext();
