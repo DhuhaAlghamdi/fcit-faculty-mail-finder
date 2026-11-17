@@ -29,3 +29,7 @@ preview-*.png
 test-results/
 playwright-report/
 .local-review/
+
+# Netlify output and local state
+dist/
+.netlify/

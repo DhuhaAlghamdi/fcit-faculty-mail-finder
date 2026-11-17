@@ -1,0 +1,36 @@
+{
+    "name":  "mail_finder",
+    "version":  "1.0.0",
+    "description":  "FCIT faculty university email directory",
+    "main":  "app.js",
+    "scripts":  {
+                    "build":  "node scripts/build.cjs",
+                    "test":  "node test-counter.cjs"
+                },
+    "repository":  {
+                       "type":  "git",
+                       "url":  "git+https://github.com/DhuhaAlghamdi/fcit-faculty-mail-finder.git"
+                   },
+    "keywords":  [
+
+                 ],
+    "author":  "",
+    "license":  "ISC",
+    "type":  "commonjs",
+    "bugs":  {
+                 "url":  "https://github.com/DhuhaAlghamdi/fcit-faculty-mail-finder/issues"
+             },
+    "homepage":  "https://github.com/DhuhaAlghamdi/fcit-faculty-mail-finder#readme",
+    "dependencies":  {
+                         "@netlify/database":  "^2.0.3",
+                         "pg":  "^8.23.1"
+                     },
+    "devDependencies":  {
+                            "@electric-sql/pglite":  "^0.2.17",
+                            "playwright":  "^1.65.1"
+                        },
+    "private":  true,
+    "engines":  {
+                    "node":  "\u003e=22.12.0"
+                }
+}

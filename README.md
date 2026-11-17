@@ -11,7 +11,21 @@ University to find their instructors’ university emails.
 - Filter by Computer Science (CS), Information Technology (IT), or Information Systems (IS).
 - Filter by student section (`طلاب` or `طالبات`). Department and section filters can be combined with each other and with name search.
 
-Built with HTML, CSS, and JavaScript. Search and filtering run in the browser using `faculty.json`. The site requires no build step, backend, or API key.
+Built with HTML, CSS, and JavaScript. Search and filtering run in the browser using `faculty.json`. The visitor counter uses a Netlify Function and Netlify Database (PostgreSQL); directory search still works when the counter is unavailable.
+
+## Visitor counter and Netlify setup
+
+The small **عدد الزائرين** box appears below the filters and above the results. Opening the page sends one POST to `/.netlify/functions/visitor-count`, independently of directory loading. Search, filters and email copying never call it. A random UUID in `sessionStorage` identifies the tab's browsing session; reloads and retries reuse it. Closing that session and opening a fresh session creates a new ID. Browser session restoration can retain the original ID. When storage or the endpoint fails, the box stays hidden.
+
+Before deploying to the existing Netlify project:
+
+1. Enable **Data & Storage → Database** in the Netlify project. The `@netlify/database` dependency also supports automatic provisioning. Keep the same production database for subsequent deployments; no browser API keys are required. Netlify supplies the server-side connection string.
+2. Deploy through Netlify's Git/build workflow so dependencies, Functions and database migrations are processed. `netlify.toml` sets Node 22, build command `npm run build`, publish directory `dist`, and Functions directory `netlify/functions`. A static folder drag-and-drop alone is insufficient.
+3. Confirm the migration `netlify/database/migrations/202611170001_visitor_counter.sql` succeeds. Netlify applies migrations before publishing. It seeds **108 only when the counter row is absent**, so the first new session returns **109**. Subsequent deploys preserve both the total and session records. Do not delete/reset the production database or truncate these tables.
+
+The database function locks the counter row, inserts the session under a unique primary key, and increments only for a newly inserted session, all in one PostgreSQL transaction. Failure rolls back both changes, so retrying after a lost response is safe. Session IDs are anonymous; no names, emails, IP addresses or browser fingerprints are stored. IDs are retained to preserve deduplication. This measures browsing sessions from the historical baseline, rather than continuing Netlify Analytics' unique-person metric. Deploy previews use isolated database branches.
+
+Run `npm ci`, `npm run build`, and `npm test`. The counter tests use embedded PostgreSQL (PGlite), the real Function handler, and Playwright/Chrome. Set `CHROME_PATH` if Chrome is installed elsewhere. They verify baseline preservation, duplicate and distinct request bursts, transaction rollback/retry, page-open counting, refresh deduplication, a fresh browser session, interaction isolation, endpoint failure, and 390/320 px layouts. Hosted Netlify/database behavior still needs a production smoke check after setup. For full local platform integration, use Netlify CLI 26+ with `netlify dev` and a linked project.
 
 ## Run locally
 
